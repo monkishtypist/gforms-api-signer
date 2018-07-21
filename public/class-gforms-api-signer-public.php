@@ -100,17 +100,4 @@ class Gforms_Api_Signer_Public {
 
 	}
 
-
-	/**
-	 * Register public facing API endpoint(s)
-	 *
-	 * @since    1.0.0
-	 */
-	public function register_wp_api_endpoints() {
-		register_rest_route( 'far', '/signature', array(
-			'methods' => 'GET',
-			'callback' => array( $this, 'far_calculate_signature_callback' ),
-		));
-	}
-
 }

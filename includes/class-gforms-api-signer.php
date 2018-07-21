@@ -157,6 +157,12 @@ class Gforms_Api_Signer {
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'admin_init' );
+		$this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_notice' );
+
+		$this->loader->add_action( 'rest_api_init', $plugin_admin, 'register_wp_api_endpoints' );
+		
+		$this->loader->add_action( 'gform_addon_navigation', $plugin_admin, 'create_admin_menu' );
 	}
 
 	/**
@@ -172,9 +178,6 @@ class Gforms_Api_Signer {
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
-
-		$this->loader->add_action( 'rest_api_init', $plugin_public, 'register_wp_api_endpoints' );
-
 	}
 
 	/**

@@ -101,6 +101,86 @@ class Gforms_Api_Signer_Admin {
 	}
 
 	/**
+	 * admin_init action hook
+	 *
+	 * @since 1.0.0
+	 */
+	public function admin_init() {
+		$current_version = $this->version;
+		$version = get_option('gform_api_signer_version');
+		if ( $version != $current_version ) {
+			update_option( 'gform_api_signer_version', $current_version );
+			$message = __( 'plugin has been updated to version', 'gforms-api-signer' );
+			$notice = sprintf( '<div class="updated notice is-dismissible"><p>%s %s <strong>%s</strong></p></div>', $this->plugin_name, $message, $current_version );
+			$this->add_notice( $notice );
+		}
+	}
+
+	/**
+	 * Returns admin notices
+	 *
+	 * Notes:
+	 * https://github.com/DevinVinson/WordPress-Plugin-Boilerplate/issues/331
+	 * https://stackoverflow.com/questions/9807064/wordpress-how-to-display-notice-in-admin-panel-on-plugin-activation
+	 *
+	 * @since 1.0.0
+	 */
+	public function admin_notice() {
+		if ( $notices = get_option( 'deferred_admin_notices' ) ) {
+			foreach ( $notices as $notice ) {
+				echo "
+
+				$notice
+
+				";
+			}
+			delete_option('deferred_admin_notices');
+		}
+	}
+
+	/**
+	 * Add admin notices
+	 * 
+	 * @param string $notice the admin notice (HTML) string
+	 * @since 1.0.0
+	 */
+	public static function add_notice( $notice ) {
+
+		$notices = get_option( 'deferred_admin_notices', array() );
+		$notices[] = $notice;
+		update_option( 'deferred_admin_notices', $notices );
+	}
+
+	/**
+	 * Adds notice on plugin activation
+	 *
+	 * @since 1.0.0
+	 */
+	public static function add_activation_notice() {
+
+		$notices = get_option( 'deferred_admin_notices', array() );
+
+		$gf_webapi_options = get_option('gravityformsaddon_gravityformswebapi_settings');
+		if( (int) $gf_webapi_options['enabled'] !== 1 ) {
+			$admin_url = get_admin_url();
+			$notices[] = sprintf( '<div class="updated notice is-dismissible"><p>In order to use <strong>%s</strong> you must enable the <a href="%s%s">Gravity Forms Web API</a>.</p></div>', __( 'Gravity Forms Web API Signature Generator', 'gforms-api-signer' ), $admin_url, 'admin.php?page=gf_settings&subview=gravityformswebapi' );
+		}
+		update_option( 'deferred_admin_notices', $notices );
+	}
+
+	/**
+	 * Register API endpoint(s)
+	 *
+	 * @since    1.0.0
+	 */
+	public function register_wp_api_endpoints() {
+		register_rest_route( 'gfapi', '/signature', array(
+			'methods' => 'GET',
+			'callback' => array( $this, 'calculate_signature_callback' ),
+		));
+	}
+
+	/**
 	 * API callback function - return calculated Gravity Forms signature
 	 *
 	 * @since    1.0.0
@@ -131,11 +211,18 @@ class Gforms_Api_Signer_Admin {
 
 		$string_to_sign = sprintf( "%s:%s:%s:%s", $parameters['public_key'], $method, $route, $expires );
 
-		$signature = $this->far_calculate_signature( $string_to_sign, $private_key );
+		$signature = $this->calculate_signature( $string_to_sign, $private_key );
 
-		$result = array( 'route' => $route, 'publicKey' => $public_key, 'sig' => $signature, 'expires' => $expires );
+		$result = new stdClass();
+
+		$result->{"route"} = $route;
+		$result->{"publicKey"} = $public_key;
+		$result->{"sig"} = $signature;
+		$result->{"expires"} = $expires;
+
+		// $result = array( 'route' => $route, 'publicKey' => $public_key, 'sig' => $signature, 'expires' => $expires );
 		
-		return json_encode( $result );
+		return $result;
 	}
 
 	/**
@@ -149,4 +236,23 @@ class Gforms_Api_Signer_Admin {
 
 		return $signature;
 	}
+
+
+	/**
+	 * Adds admin option page to Gravity Forms menu
+	 *
+	 * @since 1.0.0
+	 */
+	public function create_admin_menu( $menus ) {
+		$menus[] = array( 'name' => $this->plugin_name, 'label' => __( 'Web API Signature Options' ), 'callback' => array( $this, 'options_page' ) );
+		return $menus;
+	}
+
+	/**
+	 * 
+	 */
+	public function options_page() {
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/gforms-api-signer-admin-display.php';
+	}
+
 }

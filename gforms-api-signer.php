@@ -15,7 +15,7 @@
  * @wordpress-plugin
  * Plugin Name:       Gravity Forms API Signature Generator
  * Plugin URI:        https://github.com/monkishtypist/gforms-api-signer
- * Description:       This is a short description of what the plugin does. It's displayed in the WordPress admin area.
+ * Description:       Adds signature generator endpoint for Gravity Forms Web API call signatures.
  * Version:           1.0.0
  * Author:            Tim Spinks
  * Author URI:        https://github.com/monkishtypist/
@@ -79,4 +79,6 @@ function run_gforms_api_signer() {
 	$plugin->run();
 
 }
-run_gforms_api_signer();
+if( class_exists('GFAddOn') ) :
+	run_gforms_api_signer();
+endif;
