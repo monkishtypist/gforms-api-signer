@@ -49,6 +49,15 @@ class Gforms_Api_Signer {
 	protected $plugin_name;
 
 	/**
+	 * The unique basename of this plugin.
+	 *
+	 * @since    1.0.0
+	 * @access   protected
+	 * @var      string    $plugin_base    The basename used to uniquely identify this plugin.
+	 */
+	protected $plugin_base;
+
+	/**
 	 * The current version of the plugin.
 	 *
 	 * @since    1.0.0
@@ -67,12 +76,17 @@ class Gforms_Api_Signer {
 	 * @since    1.0.0
 	 */
 	public function __construct() {
-		if ( defined( 'PLUGIN_NAME_VERSION' ) ) {
-			$this->version = PLUGIN_NAME_VERSION;
+		if ( defined( 'GFWEBAPI_SIGNATURE_VERSION' ) ) {
+			$this->version = GFWEBAPI_SIGNATURE_VERSION;
 		} else {
 			$this->version = '1.0.0';
 		}
 		$this->plugin_name = 'gforms-api-signer';
+		if( defined( 'GFWEBAPI_SIGNATURE_BASE' ) ) {
+			$this->plugin_base = GFWEBAPI_SIGNATURE_BASE;
+		} else {
+			$this->plugin_base = plugin_basename( __FILE__ );
+		}
 
 		$this->load_dependencies();
 		$this->set_locale();
@@ -152,17 +166,19 @@ class Gforms_Api_Signer {
 	 */
 	private function define_admin_hooks() {
 
-		$plugin_admin = new Gforms_Api_Signer_Admin( $this->get_plugin_name(), $this->get_version() );
+		$plugin_admin = new Gforms_Api_Signer_Admin( $this->get_plugin_name(), $this->get_plugin_base(), $this->get_version() );
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
 
-		$this->loader->add_action( 'admin_init', $plugin_admin, 'admin_init' );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'init' );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'settings_init' );
+		$this->loader->add_action( 'admin_menu', $plugin_admin, 'admin_menu' );
 		$this->loader->add_action( 'admin_notices', $plugin_admin, 'admin_notice' );
 
+		$this->loader->add_filter( 'plugin_action_links', $plugin_admin, 'plugin_settings_link', 10, 2 );
 		$this->loader->add_action( 'rest_api_init', $plugin_admin, 'register_wp_api_endpoints' );
-		
-		$this->loader->add_action( 'gform_addon_navigation', $plugin_admin, 'create_admin_menu' );
+		$this->loader->add_action( 'updated_option', $plugin_admin, 'htaccess_cors', 10, 1 );
 	}
 
 	/**
@@ -174,7 +190,7 @@ class Gforms_Api_Signer {
 	 */
 	private function define_public_hooks() {
 
-		$plugin_public = new Gforms_Api_Signer_Public( $this->get_plugin_name(), $this->get_version() );
+		$plugin_public = new Gforms_Api_Signer_Public( $this->get_plugin_name(), $this->get_plugin_base(), $this->get_version() );
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
@@ -198,6 +214,16 @@ class Gforms_Api_Signer {
 	 */
 	public function get_plugin_name() {
 		return $this->plugin_name;
+	}
+
+	/**
+	 * The basename of the plugin used to uniquely identify it within the context of WordPress.
+	 *
+	 * @since     1.0.0
+	 * @return    string    The name of the plugin.
+	 */
+	public function get_plugin_base() {
+		return $this->plugin_base;
 	}
 
 	/**

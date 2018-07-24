@@ -2,3 +2,11 @@
  * All of the CSS for your admin-specific functionality should be
  * included in this file.
  */
+
+#gforms-api-signer-settings a.add,
+#gforms-api-signer-settings a.remove {
+	text-decoration: none;
+}
+#gforms-api-signer-settings a span.dashicons {
+	margin-top: .33rem;
+}

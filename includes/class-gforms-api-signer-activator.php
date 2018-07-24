@@ -31,10 +31,18 @@ class Gforms_Api_Signer_Activator {
 	 */
 	public static function activate() {
 
+		// Plugin requires Gravity Forms in order to be activated
 		if( !class_exists( 'GFForms' ) ) {
 			deactivate_plugins( plugin_basename( __FILE__ ) );
 			wp_die( __( 'Please install and activate Gravity Forms.', 'gforms-api-signer' ), 'Plugin dependency check', array( 'back_link' => true ) );
 		}
+
+		// Set CORS in .htaccess on plugin activation
+		$cors = '<IfModule mod_headers.c>
+	Header set Access-Control-Allow-Origin "*"
+</IfModule>';
+		if( function_exists( 'insert_with_markers' ) )
+			insert_with_markers( get_home_path() . ".htaccess", "GForms API Signature", $cors );
 	}
 
 }
